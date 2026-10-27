@@ -1,6 +1,5 @@
 package app.deckmate.shot
 
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -23,13 +22,12 @@ class UploaderTest {
     private var pauses = 0
 
     private fun line(i: InputStream): String? {
-        val o = ByteArrayOutputStream()
+        val sb = StringBuilder()
         while (true) {
             val b = i.read()
             if (b < 0) return null
-            if (b == '
-'.code) return o.toString("ISO-8859-1").trimEnd('')
-            o.write(b)
+            if (b == 10) return sb.toString().trimEnd(13.toChar())
+            sb.append(b.toChar())
         }
     }
 
@@ -63,11 +61,8 @@ class UploaderTest {
                         bodies.add(body)
                         val code = codes.getOrElse(hits) { codes.last() }
                         hits++
-                        it.getOutputStream().write("HTTP/1.1 $code X
-Content-Length: 0
-Connection: close
-
-".toByteArray())
+                        val reply = listOf("HTTP/1.1 $code X", "Content-Length: 0", "Connection: close", "", "").joinToString("\r\n")
+                        it.getOutputStream().write(reply.toByteArray())
                         it.getOutputStream().flush()
                     }
                 }
@@ -107,11 +102,13 @@ Connection: close
     }
 
     @Test
-    fun emptyAndTooLargeMapped() {
+    fun emptyIsMapped() {
         codes.add(400)
         assertEquals(SendResult.Empty, up().send("k", ByteArray(5)))
-        hits = 0
-        codes.clear()
+    }
+
+    @Test
+    fun tooLargeIsMapped() {
         codes.add(413)
         assertEquals(SendResult.TooLarge, up().send("k", ByteArray(5)))
     }
