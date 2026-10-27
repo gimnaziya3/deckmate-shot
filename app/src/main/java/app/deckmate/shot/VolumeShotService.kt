@@ -76,16 +76,8 @@ class VolumeShotService : AccessibilityService() {
                     return
                 }
                 finish("sending", false)
-                val res = Uploader(Uploader.SHOT_URL).send(key, jpeg)
-                finish(
-                    when (res) {
-                        is SendResult.Ok -> "ok"
-                        is SendResult.BadKey -> "bad_key"
-                        is SendResult.TooFast -> "too_fast"
-                        is SendResult.Network -> "net"
-                        else -> "error"
-                    }
-                )
+                val res = Pipeline.deliver(this, key, jpeg)
+                finish(res)
             }
 
             override fun onFailure(errorCode: Int) {

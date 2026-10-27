@@ -122,16 +122,8 @@ class CaptureService : Service() {
                     report("capture")
                     return@execute
                 }
-                val res = Uploader(Uploader.SHOT_URL).send(key, jpeg)
-                report(
-                    when (res) {
-                        is SendResult.Ok -> "ok"
-                        is SendResult.BadKey -> "bad_key"
-                        is SendResult.TooFast -> "too_fast"
-                        is SendResult.Network -> "net"
-                        else -> "error"
-                    }
-                )
+                val res = Pipeline.deliver(this, key, jpeg)
+                report(res)
             } finally {
                 busy.set(false)
             }

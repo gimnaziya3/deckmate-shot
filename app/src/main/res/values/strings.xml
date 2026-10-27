@@ -29,4 +29,12 @@
     <string name="a11y_desc">Takes a screenshot when you press both volume buttons together and sends it to the DeckMate bot. It does not read the screen content or other apps.</string>
     <string name="a11y_info">Fast mode (optional): press BOTH volume buttons at once to send a screenshot, no shade and no dialogs. Enable it once in Accessibility settings (Android warns about this permission: the service only takes a screenshot on your key press).</string>
     <string name="a11y_open">Enable fast mode</string>
+    <string name="ov_title">Deck overlay (optional)</string>
+    <string name="ov_warn">Shows the opponent deck as a see-through strip over the screen, touches pass through to the game. No Telegram message is sent in this mode. Note: showing information over a game during a match may break the game rules; you use it at your own risk.</string>
+    <string name="ov_enable">Show deck over the screen</string>
+    <string name="ov_alpha">Opacity</string>
+    <string name="ov_x">Position: left to right</string>
+    <string name="ov_y">Position: top to bottom</string>
+    <string name="ov_size">Size</string>
+    <string name="ov_preview">Show preview</string>
 </resources>

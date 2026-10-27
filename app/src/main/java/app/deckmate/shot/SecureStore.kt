@@ -57,6 +57,22 @@ class SecureStore(ctx: Context) {
             prefs.edit().putString("status", value).apply()
         }
 
+    var overlayOn: Boolean
+        get() = prefs.getBoolean("ov_on", false)
+        set(v) = prefs.edit().putBoolean("ov_on", v).apply()
+    var alpha: Int
+        get() = prefs.getInt("ov_alpha", 80)
+        set(v) = prefs.edit().putInt("ov_alpha", v).apply()
+    var posX: Int
+        get() = prefs.getInt("ov_x", 50)
+        set(v) = prefs.edit().putInt("ov_x", v).apply()
+    var posY: Int
+        get() = prefs.getInt("ov_y", 8)
+        set(v) = prefs.edit().putInt("ov_y", v).apply()
+    var size: Int
+        get() = prefs.getInt("ov_size", 80)
+        set(v) = prefs.edit().putInt("ov_size", v).apply()
+
     companion object {
         private const val ALIAS = "deckmate_key"
     }

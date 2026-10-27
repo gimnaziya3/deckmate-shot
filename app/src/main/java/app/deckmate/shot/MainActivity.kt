@@ -53,6 +53,7 @@ class MainActivity : Activity() {
         button(R.string.check) { check() }
         info = text(R.string.s_idle)
         text(R.string.how_to)
+        OverlaySettings.addTo(this, col, store, pad)
         text(R.string.a11y_info)
         button(R.string.a11y_open) { startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         button(R.string.allow_notifications) {
