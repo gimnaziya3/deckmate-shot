@@ -28,6 +28,12 @@ android {
         }
     }
 
+    flavorDimensions += "mode"
+    productFlavors {
+        create("basic") { dimension = "mode" }
+        create("fast") { dimension = "mode" }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false

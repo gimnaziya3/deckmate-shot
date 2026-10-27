@@ -25,10 +25,11 @@ jobs:
         env:
           KEYSTORE_PATH: ${{ runner.temp }}/release.p12
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease
+        run: gradle --no-daemon :app:testBasicDebugUnitTest :app:assembleBasicRelease :app:assembleFastRelease
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/release/app-release.apk deckmate-shot.apk
-          gh release create "v1.0.${{ github.run_number }}" deckmate-shot.apk --title "DeckMate Shot 1.0.${{ github.run_number }}" --notes "Unofficial app. APK signed with the project key."
+          cp app/build/outputs/apk/basic/release/app-basic-release.apk deckmate-shot.apk
+          cp app/build/outputs/apk/fast/release/app-fast-release.apk deckmate-shot-fast.apk
+          gh release create "v1.0.${{ github.run_number }}" deckmate-shot.apk deckmate-shot-fast.apk --title "DeckMate Shot 1.0.${{ github.run_number }}" --notes "Unofficial app. APK signed with the project key."
