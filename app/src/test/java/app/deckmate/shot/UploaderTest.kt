@@ -1,7 +1,10 @@
 package app.deckmate.shot
 
-import com.sun.net.httpserver.HttpServer
-import java.net.InetSocketAddress
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.SocketException
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -11,33 +14,72 @@ import org.junit.Before
 import org.junit.Test
 
 class UploaderTest {
-    private lateinit var server: HttpServer
+    private lateinit var server: ServerSocket
     private val codes = CopyOnWriteArrayList<Int>()
     private val keys = CopyOnWriteArrayList<String?>()
     private val types = CopyOnWriteArrayList<String?>()
     private val bodies = CopyOnWriteArrayList<ByteArray>()
-    private var hits = 0
+    @Volatile private var hits = 0
     private var pauses = 0
+
+    private fun line(i: InputStream): String? {
+        val o = ByteArrayOutputStream()
+        while (true) {
+            val b = i.read()
+            if (b < 0) return null
+            if (b == '
+'.code) return o.toString("ISO-8859-1").trimEnd('')
+            o.write(b)
+        }
+    }
 
     @Before
     fun start() {
-        server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.createContext("/scout/shot") { ex ->
-            keys.add(ex.requestHeaders.getFirst("X-Key"))
-            types.add(ex.requestHeaders.getFirst("Content-Type"))
-            bodies.add(ex.requestBody.readBytes())
-            val code = codes.getOrElse(hits) { codes.last() }
-            hits++
-            ex.sendResponseHeaders(code, -1)
-            ex.close()
-        }
-        server.start()
+        server = ServerSocket(0, 10, InetAddress.getByName("127.0.0.1"))
+        Thread {
+            try {
+                while (true) {
+                    val s = server.accept()
+                    s.use {
+                        val i = it.getInputStream()
+                        line(i)
+                        val h = HashMap<String, String>()
+                        while (true) {
+                            val l = line(i) ?: break
+                            if (l.isEmpty()) break
+                            val c = l.indexOf(':')
+                            h[l.substring(0, c).lowercase()] = l.substring(c + 1).trim()
+                        }
+                        val n = (h["content-length"] ?: "0").toInt()
+                        val body = ByteArray(n)
+                        var got = 0
+                        while (got < n) {
+                            val r = i.read(body, got, n - got)
+                            if (r < 0) break
+                            got += r
+                        }
+                        keys.add(h["x-key"])
+                        types.add(h["content-type"])
+                        bodies.add(body)
+                        val code = codes.getOrElse(hits) { codes.last() }
+                        hits++
+                        it.getOutputStream().write("HTTP/1.1 $code X
+Content-Length: 0
+Connection: close
+
+".toByteArray())
+                        it.getOutputStream().flush()
+                    }
+                }
+            } catch (e: SocketException) {
+            }
+        }.start()
     }
 
     @After
-    fun stop() = server.stop(0)
+    fun stop() = server.close()
 
-    private fun up(attempts: Int = 3) = Uploader("http://127.0.0.1:${server.address.port}/scout/shot", attempts, 2000, { pauses++ })
+    private fun up(attempts: Int = 3) = Uploader("http://127.0.0.1:${server.localPort}/scout/shot", attempts, 2000, { pauses++ })
 
     @Test
     fun sendsKeyHeaderAndRawBody() {
@@ -91,8 +133,8 @@ class UploaderTest {
 
     @Test
     fun networkErrorRetriedThreeTimes() {
-        val port = server.address.port
-        server.stop(0)
+        val port = server.localPort
+        server.close()
         val r = Uploader("http://127.0.0.1:$port/scout/shot", 3, 500, { pauses++ }).send("k", ByteArray(5))
         assertTrue(r is SendResult.Network)
         assertEquals(2, pauses)
