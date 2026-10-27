@@ -29,13 +29,16 @@ class SecureStore(ctx: Context) {
     }
 
     var key: String?
-        get() = try {
-            val raw = Base64.decode(prefs.getString("k", null) ?: return null, Base64.NO_WRAP)
-            val c = Cipher.getInstance("AES/GCM/NoPadding")
-            c.init(Cipher.DECRYPT_MODE, secretKey(), GCMParameterSpec(128, raw.copyOfRange(0, 12)))
-            String(c.doFinal(raw, 12, raw.size - 12), Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
+        get() {
+            val stored = prefs.getString("k", null) ?: return null
+            return try {
+                val raw = Base64.decode(stored, Base64.NO_WRAP)
+                val c = Cipher.getInstance("AES/GCM/NoPadding")
+                c.init(Cipher.DECRYPT_MODE, secretKey(), GCMParameterSpec(128, raw.copyOfRange(0, 12)))
+                String(c.doFinal(raw, 12, raw.size - 12), Charsets.UTF_8)
+            } catch (e: Exception) {
+                null
+            }
         }
         set(value) {
             if (value.isNullOrBlank()) {
