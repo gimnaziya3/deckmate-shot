@@ -1,0 +1,34 @@
+name: build
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+      - name: Keystore
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+      - name: Test and build
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.p12
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk deckmate-shot.apk
+          gh release create "v1.0.${{ github.run_number }}" deckmate-shot.apk --title "DeckMate Shot 1.0.${{ github.run_number }}" --notes "Unofficial app. APK signed with the project key."

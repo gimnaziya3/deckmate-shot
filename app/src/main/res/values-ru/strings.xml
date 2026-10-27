@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DeckMate Скриншот</string>
+    <string name="tile_label">DeckMate</string>
+    <string name="unofficial">Неофициальное приложение, не связано с Supercell.</string>
+    <string name="key_label">Ваш личный ключ (отправьте /scoutkey боту DeckMate в Telegram и вставьте сюда):</string>
+    <string name="key_hint">Ключ</string>
+    <string name="save">Сохранить</string>
+    <string name="check">Проверить</string>
+    <string name="saved">Ключ сохранён.</string>
+    <string name="check_ok">Ключ подходит.</string>
+    <string name="allow_notifications">Разрешить уведомления</string>
+    <string name="stop_capture">Остановить захват экрана</string>
+    <string name="how_to">Как пользоваться:\n1. Сохраните ключ и нажмите «Проверить».\n2. Опустите шторку быстрых настроек, нажмите карандаш и перетащите плитку DeckMate в шторку.\n3. На экране загрузки боя коснитесь плитки. В первый раз Android спросит разрешение на захват экрана: выберите «Весь экран» и «Начать».\n4. Колода соперника придёт в Telegram-бот.\n\nРазрешения: интернет (отправить скриншот), захват экрана (только если вы разрешили и только по вашему касанию), уведомление (показывает, что захват включён; внутри кнопка «Стоп»). Скриншот хранится только в памяти и нигде не сохраняется.</string>
+    <string name="n_channel">Захват экрана</string>
+    <string name="n_ready">Готово. Коснитесь плитки.</string>
+    <string name="n_stop">Стоп</string>
+    <string name="s_idle">Коснитесь, чтобы отправить скриншот</string>
+    <string name="s_sending">Отправка…</string>
+    <string name="s_ok">Отправлено. Колода придёт в Telegram.</string>
+    <string name="s_bad_key">Ключ не подходит. Новый: /scoutkey</string>
+    <string name="s_no_key">Нет ключа. Откройте приложение и вставьте его.</string>
+    <string name="s_net">Нет сети. Повторите.</string>
+    <string name="s_too_fast">Слишком часто. Подождите несколько секунд.</string>
+    <string name="s_denied">Захват экрана не разрешён.</string>
+    <string name="s_capture">Не удалось снять экран.</string>
+    <string name="s_need_start">Коснитесь плитки ещё раз.</string>
+    <string name="s_error">Ошибка сервера. Позже.</string>
+</resources>

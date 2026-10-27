@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DeckMate Shot</string>
+    <string name="tile_label">DeckMate</string>
+    <string name="unofficial">Unofficial app, not affiliated with Supercell.</string>
+    <string name="key_label">Your personal key (send /scoutkey to the DeckMate bot in Telegram and paste it here):</string>
+    <string name="key_hint">Key</string>
+    <string name="save">Save</string>
+    <string name="check">Check</string>
+    <string name="saved">Key saved.</string>
+    <string name="check_ok">Key works.</string>
+    <string name="allow_notifications">Allow notifications</string>
+    <string name="stop_capture">Stop screen capture</string>
+    <string name="how_to">How to use:\n1. Save the key and tap Check.\n2. Pull down the quick settings shade, tap the pencil and drag the DeckMate tile into it.\n3. On the battle loading screen tap the tile. The first time Android asks to allow screen capture: choose \"Entire screen\" and Start now.\n4. The opponent\'s deck arrives in the Telegram bot.\n\nPermissions: Internet (to send the screenshot), screen capture (only when you allow it, only on your tap), notification (shows that capture is on; Stop button inside). The screenshot is kept in memory only and is not saved.</string>
+    <string name="n_channel">Screen capture</string>
+    <string name="n_ready">Ready. Tap the tile.</string>
+    <string name="n_stop">Stop</string>
+    <string name="s_idle">Tap to send a screenshot</string>
+    <string name="s_sending">Sending…</string>
+    <string name="s_ok">Sent. Deck will arrive in Telegram.</string>
+    <string name="s_bad_key">Wrong key. Get a new one: /scoutkey</string>
+    <string name="s_no_key">No key. Open the app and paste it.</string>
+    <string name="s_net">No network. Try again.</string>
+    <string name="s_too_fast">Too fast. Wait a few seconds.</string>
+    <string name="s_denied">Capture not allowed.</string>
+    <string name="s_capture">Could not capture the screen.</string>
+    <string name="s_need_start">Tap the tile again.</string>
+    <string name="s_error">Server error. Try later.</string>
+</resources>
