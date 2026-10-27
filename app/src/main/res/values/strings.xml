@@ -26,4 +26,7 @@
     <string name="s_capture">Could not capture the screen.</string>
     <string name="s_need_start">Tap the tile again.</string>
     <string name="s_error">Server error. Try later.</string>
+    <string name="a11y_desc">Takes a screenshot when you press both volume buttons together and sends it to the DeckMate bot. It does not read the screen content or other apps.</string>
+    <string name="a11y_info">Fast mode (optional): press BOTH volume buttons at once to send a screenshot, no shade and no dialogs. Enable it once in Accessibility settings (Android warns about this permission: the service only takes a screenshot on your key press).</string>
+    <string name="a11y_open">Enable fast mode</string>
 </resources>
