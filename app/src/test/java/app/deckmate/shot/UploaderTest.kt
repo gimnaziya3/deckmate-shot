@@ -74,7 +74,8 @@ class UploaderTest {
     @After
     fun stop() = server.close()
 
-    private fun up(attempts: Int = 3) = Uploader("http://127.0.0.1:${server.localPort}/scout/shot", attempts, 2000, { pauses++ })
+    private fun up(attempts: Int = 3) =
+        Uploader("http://127.0.0.1:${server.localPort}/scout/shot", attempts, 2000, { pauses++ }, requireHttps = false)
 
     @Test
     fun sendsKeyHeaderAndRawBody() {
@@ -88,9 +89,24 @@ class UploaderTest {
     }
 
     @Test
+    fun plainHttpIsRejectedBeforeAnythingIsSent() {
+        codes.add(200)
+        val r = Uploader("http://127.0.0.1:${server.localPort}/scout/shot").send("secret-key", ByteArray(5))
+        assertEquals(SendResult.Insecure, r)
+        assertEquals(0, hits)
+    }
+
+    @Test
     fun unauthorizedIsNotRetried() {
         codes.add(401)
         assertEquals(SendResult.BadKey, up().send("k", ByteArray(5)))
+        assertEquals(1, hits)
+    }
+
+    @Test
+    fun forbiddenMeansNotOpenYetAndIsNotRetried() {
+        codes.add(403)
+        assertEquals(SendResult.NotYet, up().send("k", ByteArray(5)))
         assertEquals(1, hits)
     }
 
@@ -129,10 +145,17 @@ class UploaderTest {
     }
 
     @Test
+    fun neverMoreThanThreeAttempts() {
+        codes.add(500)
+        up(attempts = 10).send("k", ByteArray(5))
+        assertEquals(3, hits)
+    }
+
+    @Test
     fun networkErrorRetriedThreeTimes() {
         val port = server.localPort
         server.close()
-        val r = Uploader("http://127.0.0.1:$port/scout/shot", 3, 500, { pauses++ }).send("k", ByteArray(5))
+        val r = Uploader("http://127.0.0.1:$port/scout/shot", 3, 500, { pauses++ }, requireHttps = false).send("k", ByteArray(5))
         assertTrue(r is SendResult.Network)
         assertEquals(2, pauses)
     }

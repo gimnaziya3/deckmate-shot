@@ -24,6 +24,7 @@ object Pipeline {
             }
             is SendResult.BadKey -> "bad_key"
             is SendResult.TooFast -> "too_fast"
+            is SendResult.NotYet -> "soon"
             is SendResult.Network -> "net"
             else -> "error"
         }

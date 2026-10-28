@@ -22,7 +22,7 @@ object DeckApi {
         return Last(o.optInt("seq"), o.optBoolean("ok"), o.optString("msg"), cards, if (o.has("avg") && !o.isNull("avg")) o.optDouble("avg") else null)
     }
 
-    fun last(key: String, base: String = Uploader.BASE): Last? = try {
+    fun last(key: String, base: String = Uploader.BASE): Last? = if (!base.startsWith("https://")) null else try {
         val c = URL("$base/scout/last").openConnection() as HttpURLConnection
         c.connectTimeout = 8000
         c.readTimeout = 8000
@@ -36,7 +36,7 @@ object DeckApi {
         null
     }
 
-    fun icon(path: String, base: String = Uploader.BASE): ByteArray? = try {
+    fun icon(path: String, base: String = Uploader.BASE): ByteArray? = if (!base.startsWith("https://")) null else try {
         val c = URL(base + path).openConnection() as HttpURLConnection
         c.connectTimeout = 8000
         c.readTimeout = 8000
