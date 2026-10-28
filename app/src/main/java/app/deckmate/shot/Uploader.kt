@@ -7,30 +7,23 @@ import java.net.URL
 sealed class SendResult {
     object Ok : SendResult()
     object BadKey : SendResult()
-    object NotYet : SendResult()
     object TooFast : SendResult()
     object TooLarge : SendResult()
     object Empty : SendResult()
-    object Insecure : SendResult()
     data class Server(val code: Int) : SendResult()
     data class Network(val reason: String) : SendResult()
 }
 
-/**
- * Отправка скриншота на /scout/shot. Только HTTPS (иначе ключ не отправляется вообще), таймауты, повторы только при сбое сети
- * и ответах 5xx (до 3 попыток). Ключ в логи и сообщения не попадает.
- */
+/** Отправка скриншота на /scout/shot. Повторы только при сбое сети и ответах 5xx; ключ в логи и сообщения не попадает. */
 class Uploader(
     private val url: String,
     private val attempts: Int = 3,
     private val timeoutMs: Int = 15000,
     private val pause: (Int) -> Unit = { Thread.sleep(1000L * it) },
-    private val requireHttps: Boolean = true,
 ) {
     fun send(key: String, body: ByteArray, mime: String = "image/jpeg", overlay: Boolean = false): SendResult {
-        if (requireHttps && !url.startsWith("https://")) return SendResult.Insecure
         var last: SendResult = SendResult.Network("none")
-        for (i in 1..attempts.coerceAtMost(3)) {
+        for (i in 1..attempts) {
             last = once(key, body, mime, overlay)
             val retry = last is SendResult.Network || (last is SendResult.Server && last.code >= 500)
             if (!retry) return last
@@ -55,7 +48,6 @@ class Uploader(
             when (val code = conn.responseCode) {
                 200 -> SendResult.Ok
                 401 -> SendResult.BadKey
-                403 -> SendResult.NotYet
                 429 -> SendResult.TooFast
                 413 -> SendResult.TooLarge
                 400 -> SendResult.Empty
