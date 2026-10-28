@@ -60,41 +60,71 @@ object OverlayController {
         }
     }
 
+    /** Колода как в игре: два ряда по 4 карты; эволюции и герои в цветной рамке с пометкой. */
     private fun buildRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>): LinearLayout {
         val store = SecureStore(app)
         val d = app.resources.displayMetrics.density
         val k = store.size / 100f
-        val cw = (46 * d * k).toInt()
-        val ch = (56 * d * k).toInt()
-        val row = LinearLayout(app).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding((4 * d).toInt(), (4 * d).toInt(), (4 * d).toInt(), (4 * d).toInt())
+        val cw = (50 * d * k).toInt()
+        val ch = (60 * d * k).toInt()
+        val gap = (3 * d).toInt()
+        val grid = LinearLayout(app).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(gap, gap, gap, gap)
             background = GradientDrawable().apply {
                 setColor(Color.argb(200, 12, 16, 28))
                 cornerRadius = 10 * d
             }
         }
-        cards.forEachIndexed { i, c ->
-            val cell = FrameLayout(app)
-            val img = ImageView(app).apply { scaleType = ImageView.ScaleType.FIT_CENTER }
-            imgs.getOrNull(i)?.takeIf { it.isNotEmpty() }?.let { img.setImageBitmap(BitmapFactory.decodeByteArray(it, 0, it.size)) }
-            cell.addView(img, FrameLayout.LayoutParams(cw, ch))
-            if (c.elixir != null) {
-                cell.addView(TextView(app).apply {
-                    text = c.elixir.toString()
-                    setTextColor(Color.WHITE)
-                    textSize = 10f * k
-                    gravity = Gravity.CENTER
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.OVAL
-                        setColor(if (c.hero) Color.rgb(255, 197, 51) else if (c.evo) Color.rgb(170, 90, 255) else Color.rgb(190, 60, 220))
+        for (r in 0 until 2) {
+            val line = LinearLayout(app).apply { orientation = LinearLayout.HORIZONTAL }
+            for (col in 0 until 4) {
+                val i = r * 4 + col
+                val c = cards.getOrNull(i) ?: continue
+                val special = c.hero || c.evo
+                val frameColor = if (c.hero) Color.rgb(255, 197, 51) else Color.rgb(170, 90, 255)
+                val cell = FrameLayout(app).apply {
+                    if (special) background = GradientDrawable().apply {
+                        setStroke((2 * d).toInt(), frameColor)
+                        cornerRadius = 6 * d
                     }
-                }, FrameLayout.LayoutParams((16 * d * k).toInt(), (16 * d * k).toInt(), Gravity.TOP or Gravity.START))
+                    setPadding((1 * d).toInt(), (1 * d).toInt(), (1 * d).toInt(), (1 * d).toInt())
+                }
+                val img = ImageView(app).apply { scaleType = ImageView.ScaleType.FIT_CENTER }
+                imgs.getOrNull(i)?.takeIf { it.isNotEmpty() }?.let { img.setImageBitmap(BitmapFactory.decodeByteArray(it, 0, it.size)) }
+                cell.addView(img, FrameLayout.LayoutParams(cw, ch))
+                if (c.elixir != null) {
+                    cell.addView(TextView(app).apply {
+                        text = c.elixir.toString()
+                        setTextColor(Color.WHITE)
+                        textSize = 10f * k
+                        gravity = Gravity.CENTER
+                        background = GradientDrawable().apply {
+                            shape = GradientDrawable.OVAL
+                            setColor(Color.rgb(190, 60, 220))
+                        }
+                    }, FrameLayout.LayoutParams((16 * d * k).toInt(), (16 * d * k).toInt(), Gravity.TOP or Gravity.START))
+                }
+                if (special) {
+                    cell.addView(TextView(app).apply {
+                        text = if (c.hero) "H" else "E"
+                        setTextColor(if (c.hero) Color.rgb(40, 30, 0) else Color.WHITE)
+                        textSize = 9f * k
+                        gravity = Gravity.CENTER
+                        background = GradientDrawable().apply {
+                            shape = GradientDrawable.OVAL
+                            setColor(frameColor)
+                        }
+                    }, FrameLayout.LayoutParams((14 * d * k).toInt(), (14 * d * k).toInt(), Gravity.BOTTOM or Gravity.END))
+                }
+                line.addView(cell, LinearLayout.LayoutParams(cw + (2 * d).toInt() + (2 * d).toInt(), ch + (4 * d).toInt()).apply {
+                    setMargins(gap / 2, gap / 2, gap / 2, gap / 2)
+                })
             }
-            row.addView(cell, LinearLayout.LayoutParams(cw, ch))
+            grid.addView(line)
         }
-        row.alpha = store.alpha / 100f
-        return row
+        grid.alpha = store.alpha / 100f
+        return grid
     }
 
     private fun showRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>, hideMs: Long, touchable: Boolean) {
