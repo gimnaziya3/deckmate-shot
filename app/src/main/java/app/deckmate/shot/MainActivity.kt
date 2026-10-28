@@ -44,7 +44,23 @@ class MainActivity : Activity() {
             setBackgroundColor(Color.rgb(242, 244, 248))
         }
         page.addView(label(getString(R.string.app_name), 24f, bold = true))
-        page.addView(label(getString(R.string.unofficial), 12f, Color.GRAY))
+        val upd = card(page, R.string.h_update)
+        upd.visibility = android.view.View.GONE
+        val updText = label("", 15f, blue, bold = true)
+        upd.addView(updText)
+        upd.addView(button(R.string.upd_button, true) {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Updates.DOWNLOAD)))
+        }, full())
+        Thread {
+            val v = Updates.check(this)
+            if (v != null) runOnUiThread {
+                updText.text = getString(R.string.upd_text, v)
+                upd.visibility = android.view.View.VISIBLE
+            }
+        }.start()
+
+        val guide = card(page, R.string.h_guide)
+        guide.addView(label(getString(R.string.guide_text), 14f))
 
         val keyCard = card(page, R.string.h_key)
         keyCard.addView(label(getString(R.string.key_label), 14f))
@@ -131,7 +147,12 @@ class MainActivity : Activity() {
             fast.addView(button(R.string.a11y_open, false) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }, full())
         }
 
-        page.addView(label(getString(R.string.perm_info), 12f, Color.GRAY))
+        val safe = card(page, R.string.h_safe)
+        safe.addView(label(getString(R.string.safe_text), 14f))
+        safe.addView(button(R.string.privacy_link, false) {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Uploader.BASE + "/legal/privacy")))
+        }, full())
+        page.addView(label(getString(R.string.about_text, Updates.current(this)), 12f, Color.GRAY))
         setContentView(ScrollView(this).apply { addView(page) })
     }
 
