@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      make_latest:
+        description: "Сделать выпуск основным (Latest): true только по решению владельца"
+        default: "false"
 permissions:
   contents: write
 jobs:
@@ -29,7 +33,13 @@ jobs:
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
+          MAKE_LATEST: ${{ github.event.inputs.make_latest }}
         run: |
           cp app/build/outputs/apk/basic/release/app-basic-release.apk deckmate-shot.apk
           cp app/build/outputs/apk/fast/release/app-fast-release.apk deckmate-shot-fast.apk
-          gh release create "v1.0.${{ github.run_number }}" deckmate-shot.apk deckmate-shot-fast.apk --title "DeckMate Shot 1.0.${{ github.run_number }}" --notes "Unofficial app. APK signed with the project key."
+          N=${{ github.run_number }}
+          if [ "$MAKE_LATEST" = "true" ]; then
+            gh release create "v1.0.$N" deckmate-shot.apk deckmate-shot-fast.apk --title "DeckMate Shot 1.0.$N" --notes "APK signed with the project key." --latest
+          else
+            gh release create "v1.0.$N-rc" deckmate-shot.apk deckmate-shot-fast.apk --title "DeckMate Shot 1.0.$N (pre-release)" --notes "Pre-release build for testing. APK signed with the project key." --prerelease --latest=false
+          fi
