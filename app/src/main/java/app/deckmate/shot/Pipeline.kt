@@ -36,6 +36,10 @@ object Pipeline {
             OverlayController.show(app, first)
             return
         }
+        if (first.msg.startsWith("Не смог прочитать")) {
+            OverlayController.message(app, app.getString(R.string.ov_unread))  // повтор того же снимка не поможет
+            return
+        }
         OverlayController.message(app, app.getString(R.string.ov_retry), 10_000)
         Thread.sleep(RETRY_PAUSE_MS)
         if (Uploader(Uploader.SHOT_URL).send(key, jpeg, overlay = true) !is SendResult.Ok) {

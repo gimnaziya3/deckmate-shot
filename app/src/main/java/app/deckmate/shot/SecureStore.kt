@@ -70,8 +70,8 @@ class SecureStore(ctx: Context) {
         get() = prefs.getInt("ov_x", 50)
         set(v) = prefs.edit().putInt("ov_x", v).apply()
     var posY: Int
-        get() = prefs.getInt("ov_y", 8)
-        set(v) = prefs.edit().putInt("ov_y", v).apply()
+        get() = prefs.getInt("ov_y2", 40)
+        set(v) = prefs.edit().putInt("ov_y2", v).apply()
     var size: Int
         get() = prefs.getInt("ov_size", 80)
         set(v) = prefs.edit().putInt("ov_size", v).apply()

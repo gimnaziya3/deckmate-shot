@@ -111,6 +111,7 @@ class MainActivity : Activity() {
         }
         ov.addView(overlaySwitch, full())
         ov.addView(label(getString(R.string.ov_info), 14f))
+        ov.addView(label(getString(R.string.ov_area), 13f, Color.rgb(160, 50, 50)))
         permInfo = label("", 13f, Color.GRAY)
         ov.addView(permInfo)
         ov.addView(button(R.string.ov_grant, false) { grantOverlay() }, full())

@@ -147,7 +147,8 @@ object OverlayController {
         v.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         val b = wm.currentWindowMetrics.bounds
         p.x = ((b.width() - v.measuredWidth) * store.posX / 100f).toInt().coerceAtLeast(0)
-        p.y = ((b.height() - v.measuredHeight) * store.posY / 100f).toInt().coerceAtLeast(0)
+        val top = b.height() / 2  // верхняя половина закрыта: там ник, клан, уровень короля и лига соперника
+        p.y = (top + (b.height() - top - v.measuredHeight) * store.posY / 100f).toInt().coerceAtLeast(top)
         try {
             wm.addView(v, p)
             view = v
@@ -225,15 +226,17 @@ object OverlayController {
                     MotionEvent.ACTION_MOVE -> {
                         val b = wm.currentWindowMetrics.bounds
                         p.x = (ox + (e.rawX - sx)).toInt().coerceIn(0, (b.width() - box.width).coerceAtLeast(0))
-                        p.y = (oy + (e.rawY - sy)).toInt().coerceIn(0, (b.height() - box.height).coerceAtLeast(0))
+                        val top = b.height() / 2
+                        p.y = (oy + (e.rawY - sy)).toInt().coerceIn(top, (b.height() - box.height).coerceAtLeast(top))
                         wm.updateViewLayout(box, p)
                     }
                     MotionEvent.ACTION_UP -> {
                         val b = wm.currentWindowMetrics.bounds
                         val fx = (b.width() - box.width).coerceAtLeast(1)
-                        val fy = (b.height() - box.height).coerceAtLeast(1)
+                        val top = b.height() / 2
+                        val fy = (b.height() - top - box.height).coerceAtLeast(1)
                         store.posX = (p.x * 100 / fx).coerceIn(0, 100)
-                        store.posY = (p.y * 100 / fy).coerceIn(0, 100)
+                        store.posY = ((p.y - top) * 100 / fy).coerceIn(0, 100)
                     }
                 }
                 true
