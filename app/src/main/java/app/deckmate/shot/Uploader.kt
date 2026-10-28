@@ -10,18 +10,21 @@ sealed class SendResult {
     object TooFast : SendResult()
     object TooLarge : SendResult()
     object Empty : SendResult()
+    object Insecure : SendResult()
     data class Server(val code: Int) : SendResult()
     data class Network(val reason: String) : SendResult()
 }
 
-/** Отправка скриншота на /scout/shot. Повторы только при сбое сети и ответах 5xx; ключ в логи и сообщения не попадает. */
+/** Отправка скриншота на /scout/shot. Только HTTPS: на адрес без https ключ не отправляется. Повторы только при сбое сети и ответах 5xx; ключ в логи и сообщения не попадает. */
 class Uploader(
     private val url: String,
     private val attempts: Int = 3,
     private val timeoutMs: Int = 15000,
     private val pause: (Int) -> Unit = { Thread.sleep(1000L * it) },
+    private val requireHttps: Boolean = true,
 ) {
     fun send(key: String, body: ByteArray, mime: String = "image/jpeg", overlay: Boolean = false): SendResult {
+        if (requireHttps && !url.startsWith("https://")) return SendResult.Insecure
         var last: SendResult = SendResult.Network("none")
         for (i in 1..attempts) {
             last = once(key, body, mime, overlay)
