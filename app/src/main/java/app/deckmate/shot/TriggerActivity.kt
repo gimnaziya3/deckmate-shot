@@ -14,6 +14,10 @@ class TriggerActivity : Activity() {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
         } else if (CaptureService.active) {
+            if (intent.getBooleanExtra(EXTRA_SILENT, false)) {
+                finish()
+                return
+            }
             startService(Intent(this, CaptureService::class.java).setAction(CaptureService.A_SHOT))
             finish()
         } else {
@@ -32,6 +36,7 @@ class TriggerActivity : Activity() {
                     Intent(this, CaptureService::class.java).setAction(CaptureService.A_START)
                         .putExtra(CaptureService.EXTRA_CODE, resultCode)
                         .putExtra(CaptureService.EXTRA_DATA, data)
+                        .putExtra(EXTRA_SILENT, intent.getBooleanExtra(EXTRA_SILENT, false))
                 )
             } else {
                 SecureStore(this).status = "denied"
@@ -42,5 +47,6 @@ class TriggerActivity : Activity() {
 
     companion object {
         private const val REQ = 1
+        const val EXTRA_SILENT = "silent"
     }
 }

@@ -9,31 +9,58 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
-/** Полупрозрачная плашка с колодой соперника поверх экрана. Не принимает касания (нажатия проходят в игру), положение, размер и прозрачность задаются в настройках. */
+/**
+ * Полупрозрачная плашка с колодой соперника поверх экрана. В бою не принимает касания (они проходят в игру).
+ * Положение, размер и прозрачность задаются в настройках; режим настройки позволяет перетащить плашку пальцем.
+ */
 object OverlayController {
     private val ui = Handler(Looper.getMainLooper())
     private var view: View? = null
     private val icons = HashMap<String, ByteArray>()
     private const val HIDE_MS = 150_000L
+    private const val MSG_MS = 12_000L
 
     fun canDraw(ctx: Context) = Settings.canDrawOverlays(ctx)
 
     fun show(ctx: Context, deck: Last, hideMs: Long = HIDE_MS) {
         val app = ctx.applicationContext
         val loaded = deck.cards.map { c -> c.icon?.let { p -> icons.getOrPut(p) { DeckApi.icon(p) ?: ByteArray(0) } } }
-        ui.post { render(app, deck.cards, loaded, hideMs) }
+        ui.post { showRow(app, deck.cards, loaded, hideMs, false) }
     }
 
-    private fun render(app: Context, cards: List<Card>, imgs: List<ByteArray?>, hideMs: Long) {
-        hide(app)
-        if (!canDraw(app)) return
+    /** Короткое сообщение на месте плашки (колода не найдена, нет ответа и т. п.). */
+    fun message(ctx: Context, text: String, ms: Long = MSG_MS) {
+        val app = ctx.applicationContext
+        ui.post {
+            hide(app)
+            if (!canDraw(app)) return@post
+            val d = app.resources.displayMetrics.density
+            val tv = TextView(app).apply {
+                this.text = text
+                setTextColor(Color.WHITE)
+                textSize = 14f
+                setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
+                maxWidth = (app.resources.displayMetrics.widthPixels * 0.9).toInt()
+                background = GradientDrawable().apply {
+                    setColor(Color.argb(215, 120, 30, 40))
+                    cornerRadius = 10 * d
+                }
+                alpha = SecureStore(app).alpha / 100f
+            }
+            attach(app, tv, ms, touchable = false)
+        }
+    }
+
+    private fun buildRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>): LinearLayout {
         val store = SecureStore(app)
         val d = app.resources.displayMetrics.density
         val k = store.size / 100f
@@ -67,23 +94,34 @@ object OverlayController {
             row.addView(cell, LinearLayout.LayoutParams(cw, ch))
         }
         row.alpha = store.alpha / 100f
+        return row
+    }
+
+    private fun showRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>, hideMs: Long, touchable: Boolean) {
+        hide(app)
+        if (!canDraw(app)) return
+        attach(app, buildRow(app, cards, imgs), hideMs, touchable)
+    }
+
+    private fun attach(app: Context, v: View, hideMs: Long, touchable: Boolean) {
+        val store = SecureStore(app)
         val wm = app.getSystemService(WindowManager::class.java)
+        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        if (!touchable) flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         val p = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, flags, PixelFormat.TRANSLUCENT
         )
         p.gravity = Gravity.TOP or Gravity.START
-        row.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        v.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         val b = wm.currentWindowMetrics.bounds
-        p.x = ((b.width() - row.measuredWidth) * store.posX / 100f).toInt().coerceAtLeast(0)
-        p.y = ((b.height() - row.measuredHeight) * store.posY / 100f).toInt().coerceAtLeast(0)
+        p.x = ((b.width() - v.measuredWidth) * store.posX / 100f).toInt().coerceAtLeast(0)
+        p.y = ((b.height() - v.measuredHeight) * store.posY / 100f).toInt().coerceAtLeast(0)
         try {
-            wm.addView(row, p)
-            view = row
-            ui.postDelayed({ hide(app) }, hideMs)
+            wm.addView(v, p)
+            view = v
+            if (hideMs > 0) ui.postDelayed({ hide(app) }, hideMs)
         } catch (e: Exception) {
             view = null
         }
@@ -100,9 +138,76 @@ object OverlayController {
         view = null
     }
 
-    /** Пробная плашка для настройки положения: 8 пустых карт на 8 секунд. */
+    private fun sampleCards() = (1..8).map { Card("", it % 6 + 1, it == 1, it == 2, null) }
+
+    /** Пробная плашка на 8 секунд. */
     fun preview(ctx: Context) {
-        val cards = (1..8).map { Card("", it % 6 + 1, it == 1, it == 2, null) }
-        ui.post { render(ctx.applicationContext, cards, cards.map { null }, 8000) }
+        val app = ctx.applicationContext
+        val cards = sampleCards()
+        ui.post { showRow(app, cards, cards.map { null }, 8000, false) }
+    }
+
+    /** Режим настройки: плашку можно перетащить, кнопки меняют размер, «Готово» сохраняет положение. */
+    fun edit(ctx: Context) {
+        val app = ctx.applicationContext
+        ui.post {
+            hide(app)
+            if (!canDraw(app)) return@post
+            val store = SecureStore(app)
+            val d = app.resources.displayMetrics.density
+            val cards = sampleCards()
+            val box = LinearLayout(app).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding((6 * d).toInt(), (6 * d).toInt(), (6 * d).toInt(), (6 * d).toInt())
+                background = GradientDrawable().apply {
+                    setColor(Color.argb(120, 47, 111, 235))
+                    cornerRadius = 12 * d
+                }
+            }
+            box.addView(buildRow(app, cards, cards.map { null }))
+            box.addView(TextView(app).apply {
+                setText(R.string.ov_drag)
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+            })
+            val btns = LinearLayout(app).apply { orientation = LinearLayout.HORIZONTAL }
+            fun btn(label: String, action: () -> Unit) = Button(app).apply {
+                text = label
+                setOnClickListener { action() }
+                btns.addView(this, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            }
+            btn("−") { store.size = (store.size - 10).coerceAtLeast(40); edit(app) }
+            btn("+") { store.size = (store.size + 10).coerceAtMost(130); edit(app) }
+            btn(app.getString(R.string.ov_done)) { hide(app) }
+            box.addView(btns)
+            attach(app, box, 0, touchable = true)
+            val wm = app.getSystemService(WindowManager::class.java)
+            val p = box.layoutParams as WindowManager.LayoutParams
+            var sx = 0f
+            var sy = 0f
+            var ox = 0
+            var oy = 0
+            box.setOnTouchListener { _, e ->
+                when (e.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        sx = e.rawX; sy = e.rawY; ox = p.x; oy = p.y
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        val b = wm.currentWindowMetrics.bounds
+                        p.x = (ox + (e.rawX - sx)).toInt().coerceIn(0, (b.width() - box.width).coerceAtLeast(0))
+                        p.y = (oy + (e.rawY - sy)).toInt().coerceIn(0, (b.height() - box.height).coerceAtLeast(0))
+                        wm.updateViewLayout(box, p)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        val b = wm.currentWindowMetrics.bounds
+                        val fx = (b.width() - box.width).coerceAtLeast(1)
+                        val fy = (b.height() - box.height).coerceAtLeast(1)
+                        store.posX = (p.x * 100 / fx).coerceIn(0, 100)
+                        store.posY = (p.y * 100 / fy).coerceIn(0, 100)
+                    }
+                }
+                true
+            }
+        }
     }
 }

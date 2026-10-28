@@ -3,73 +3,187 @@ package app.deckmate.shot
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.text.InputType
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.Switch
 import android.widget.TextView
 
-/** Экран настройки: ключ из /scoutkey, проверка, короткая инструкция. Интерфейс собран кодом, без лишних библиотек. */
+/** Экран настройки: ключ, быстрый снимок, оверлей с колодой. Интерфейс собран кодом, без лишних библиотек. */
 class MainActivity : Activity() {
     private lateinit var keyField: EditText
     private lateinit var info: TextView
     private lateinit var store: SecureStore
+    private lateinit var overlaySwitch: Switch
+    private lateinit var permInfo: TextView
+    private var syncing = false
+
+    private val blue = Color.rgb(47, 111, 235)
+    private val dp by lazy { resources.displayMetrics.density }
+
+    private fun px(v: Int) = (v * dp).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         store = SecureStore(this)
-        val pad = (16 * resources.displayMetrics.density).toInt()
-        val col = LinearLayout(this).apply {
+        val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad, pad, pad)
+            setPadding(px(14), px(14), px(14), px(24))
+            setBackgroundColor(Color.rgb(242, 244, 248))
         }
-        fun text(res: Int, size: Float = 15f) = TextView(this).apply {
-            setText(res)
-            textSize = size
-            setPadding(0, pad / 2, 0, pad / 2)
-            col.addView(this)
-        }
-        fun button(res: Int, action: () -> Unit) = Button(this).apply {
-            setText(res)
-            setOnClickListener { action() }
-            col.addView(this, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        }
+        page.addView(label(getString(R.string.app_name), 24f, bold = true))
+        page.addView(label(getString(R.string.unofficial), 12f, Color.GRAY))
 
-        text(R.string.app_name, 22f)
-        text(R.string.unofficial, 13f)
-        text(R.string.key_label)
+        val keyCard = card(page, R.string.h_key)
+        keyCard.addView(label(getString(R.string.key_label), 14f))
         keyField = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             setHint(R.string.key_hint)
             setSingleLine()
             if (!store.key.isNullOrBlank()) setText(MASK)
         }
-        col.addView(keyField, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        button(R.string.save) { save() }
-        button(R.string.check) { check() }
-        info = text(R.string.s_idle)
-        text(R.string.how_to)
-<<<<<<< HEAD
-        if (resources.getBoolean(R.bool.fast)) {
-            text(R.string.a11y_info)
-            button(R.string.a11y_open) { startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-        }
-=======
-        OverlaySettings.addTo(this, col, store, pad)
-        text(R.string.a11y_info)
-        button(R.string.a11y_open) { startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
->>>>>>> overlay
-        button(R.string.allow_notifications) {
-            if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-        }
-        button(R.string.stop_capture) {
+        keyCard.addView(keyField, full())
+        val keyRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        keyRow.addView(button(R.string.save, true) { save() }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        keyRow.addView(button(R.string.check, false) { check() }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        keyCard.addView(keyRow, full())
+        info = label(getString(R.string.s_idle), 14f, blue, bold = true)
+        keyCard.addView(info)
+
+        val shot = card(page, R.string.h_shot)
+        shot.addView(label(getString(R.string.shot_info), 14f))
+        shot.addView(button(R.string.start_capture, true) {
+            startActivity(Intent(this, TriggerActivity::class.java).putExtra(TriggerActivity.EXTRA_SILENT, true))
+        }, full())
+        shot.addView(button(R.string.stop_capture, false) {
             startService(Intent(this, CaptureService::class.java).setAction(CaptureService.A_STOP))
+        }, full())
+        shot.addView(button(R.string.allow_notifications, false) {
+            if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }, full())
+
+        val ov = card(page, R.string.h_overlay)
+        overlaySwitch = Switch(this).apply {
+            setText(R.string.ov_enable)
+            textSize = 16f
+            setOnCheckedChangeListener { _, on ->
+                if (syncing) return@setOnCheckedChangeListener
+                if (on && !OverlayController.canDraw(this@MainActivity)) {
+                    grantOverlay()
+                    syncOverlay()
+                } else {
+                    store.overlayOn = on
+                }
+            }
         }
-        setContentView(ScrollView(this).apply { addView(col) })
+        ov.addView(overlaySwitch, full())
+        ov.addView(label(getString(R.string.ov_info), 14f))
+        permInfo = label("", 13f, Color.GRAY)
+        ov.addView(permInfo)
+        ov.addView(button(R.string.ov_grant, false) { grantOverlay() }, full())
+        ov.addView(button(R.string.ov_place, true) {
+            if (OverlayController.canDraw(this)) OverlayController.edit(this) else grantOverlay()
+        }, full())
+        ov.addView(button(R.string.ov_preview, false) {
+            if (OverlayController.canDraw(this)) OverlayController.preview(this) else grantOverlay()
+        }, full())
+        slider(ov, R.string.ov_alpha, 20, 100, { store.alpha }, { store.alpha = it })
+        slider(ov, R.string.ov_size, 40, 130, { store.size }, { store.size = it })
+        ov.addView(label(getString(R.string.ov_warn), 12f, Color.rgb(160, 50, 50)))
+
+        if (resources.getBoolean(R.bool.fast)) {
+            val fast = card(page, R.string.a11y_open)
+            fast.addView(label(getString(R.string.a11y_info), 14f))
+            fast.addView(button(R.string.a11y_open, false) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }, full())
+        }
+
+        page.addView(label(getString(R.string.perm_info), 12f, Color.GRAY))
+        setContentView(ScrollView(this).apply { addView(page) })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncOverlay()
+    }
+
+    private fun syncOverlay() {
+        val ok = OverlayController.canDraw(this)
+        if (!ok && store.overlayOn) store.overlayOn = false
+        syncing = true
+        overlaySwitch.isChecked = store.overlayOn && ok
+        syncing = false
+        permInfo.setText(if (ok) R.string.ov_perm_ok else R.string.ov_perm_no)
+    }
+
+    private fun grantOverlay() {
+        startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+    }
+
+    private fun full() = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        .apply { topMargin = px(6) }
+
+    private fun label(text: String, size: Float, color: Int = Color.rgb(30, 34, 44), bold: Boolean = false) = TextView(this).apply {
+        this.text = text
+        textSize = size
+        setTextColor(color)
+        if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
+        setPadding(0, px(4), 0, px(4))
+    }
+
+    private fun card(parent: LinearLayout, title: Int): LinearLayout {
+        val c = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(px(14), px(12), px(14), px(14))
+            background = GradientDrawable().apply {
+                setColor(Color.WHITE)
+                cornerRadius = 16 * dp
+            }
+        }
+        c.addView(label(getString(title), 17f, blue, bold = true))
+        parent.addView(c, full().apply { topMargin = px(12) })
+        return c
+    }
+
+    private fun button(res: Int, primary: Boolean, action: () -> Unit) = Button(this).apply {
+        setText(res)
+        isAllCaps = false
+        setTextColor(if (primary) Color.WHITE else blue)
+        background = GradientDrawable().apply {
+            if (primary) setColor(blue) else {
+                setColor(Color.WHITE)
+                setStroke(px(1), blue)
+            }
+            cornerRadius = 12 * dp
+        }
+        setOnClickListener { action() }
+    }
+
+    private fun slider(parent: LinearLayout, res: Int, min: Int, max: Int, get: () -> Int, set: (Int) -> Unit) {
+        parent.addView(label(getString(res), 14f))
+        parent.addView(SeekBar(this).apply {
+            this.max = max - min
+            progress = get() - min
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                    if (fromUser) set(p + min)
+                }
+
+                override fun onStartTrackingTouch(s: SeekBar?) {}
+                override fun onStopTrackingTouch(s: SeekBar?) {
+                    if (OverlayController.canDraw(this@MainActivity)) OverlayController.preview(this@MainActivity)
+                }
+            })
+        }, full())
     }
 
     /** Возвращает введённый ключ, либо уже сохранённый, если поле не меняли. */
