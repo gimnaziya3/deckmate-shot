@@ -76,6 +76,16 @@ object OverlayController {
                 cornerRadius = 10 * d
             }
         }
+        val costs = cards.mapNotNull { it.elixir }
+        if (costs.isNotEmpty()) {
+            val avg = Math.round(costs.sum() * 10.0 / costs.size) / 10.0
+            grid.addView(TextView(app).apply {
+                text = app.getString(R.string.ov_avg, avg.toString())
+                setTextColor(Color.WHITE)
+                textSize = 12f * k
+                setPadding((4 * d).toInt(), 0, 0, (2 * d).toInt())
+            })
+        }
         for (r in 0 until 2) {
             val line = LinearLayout(app).apply { orientation = LinearLayout.HORIZONTAL }
             for (col in 0 until 4) {
