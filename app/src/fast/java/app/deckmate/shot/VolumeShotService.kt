@@ -76,7 +76,7 @@ class VolumeShotService : AccessibilityService() {
                     return
                 }
                 finish("sending", false)
-                val res = Pipeline.deliver(this, key, jpeg)
+                val res = Pipeline.deliver(this@VolumeShotService, key, jpeg)
                 finish(res)
             }
 
