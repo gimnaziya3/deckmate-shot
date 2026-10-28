@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">DeckMate Shot</string>
     <string name="tile_label">DeckMate</string>
-    <string name="unofficial">App by an independent developer, not affiliated with Supercell.</string>
     <string name="h_key">1. Key</string>
     <string name="key_label">Send /scoutkey to the DeckMate bot in Telegram and paste the key here.</string>
     <string name="key_hint">Key</string>
@@ -25,7 +24,7 @@
     <string name="ov_preview">Show example</string>
     <string name="ov_alpha">Opacity</string>
     <string name="ov_size">Size</string>
-    <string name="ov_warn">You turn the on-screen deck on by choice and use it at your own risk: the game rules may not support hints during a match.</string>
+    <string name="ov_warn">Works over the game, use at your discretion.</string>
     <string name="ov_drag">Drag the strip with your finger</string>
     <string name="ov_done">Done</string>
     <string name="ov_retry">Deck not found, trying once more…</string>
