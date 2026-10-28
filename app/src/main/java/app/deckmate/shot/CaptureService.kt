@@ -122,6 +122,7 @@ class CaptureService : Service() {
                     report("capture")
                     return@execute
                 }
+<<<<<<< HEAD
                 val res = Uploader(Uploader.SHOT_URL).send(key, jpeg)
                 report(
                     when (res) {
@@ -132,6 +133,10 @@ class CaptureService : Service() {
                         else -> "error"
                     }
                 )
+=======
+                val res = Pipeline.deliver(this, key, jpeg)
+                report(res)
+>>>>>>> overlay
             } finally {
                 busy.set(false)
             }
@@ -180,15 +185,21 @@ class CaptureService : Service() {
         val stop = PendingIntent.getService(
             this, 0, Intent(this, CaptureService::class.java).setAction(A_STOP), PendingIntent.FLAG_IMMUTABLE
         )
+<<<<<<< HEAD
         val settings = PendingIntent.getActivity(
             this, 1, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE
         )
+=======
+>>>>>>> overlay
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_tile)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(text)
             .setOngoing(true)
+<<<<<<< HEAD
             .addAction(Notification.Action.Builder(null, getString(R.string.n_settings), settings).build())
+=======
+>>>>>>> overlay
             .addAction(Notification.Action.Builder(null, getString(R.string.n_stop), stop).build())
             .build()
     }

@@ -28,12 +28,15 @@ android {
         }
     }
 
+<<<<<<< HEAD
     flavorDimensions += "mode"
     productFlavors {
         create("basic") { dimension = "mode" }
         create("fast") { dimension = "mode" }
     }
 
+=======
+>>>>>>> overlay
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -54,4 +57,8 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+<<<<<<< HEAD
+=======
+    testImplementation("org.json:json:20231013")
+>>>>>>> overlay
 }

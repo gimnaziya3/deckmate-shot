@@ -53,10 +53,16 @@ class MainActivity : Activity() {
         button(R.string.check) { check() }
         info = text(R.string.s_idle)
         text(R.string.how_to)
+<<<<<<< HEAD
         if (resources.getBoolean(R.bool.fast)) {
             text(R.string.a11y_info)
             button(R.string.a11y_open) { startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         }
+=======
+        OverlaySettings.addTo(this, col, store, pad)
+        text(R.string.a11y_info)
+        button(R.string.a11y_open) { startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+>>>>>>> overlay
         button(R.string.allow_notifications) {
             if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }

@@ -21,10 +21,10 @@ class Uploader(
     private val timeoutMs: Int = 15000,
     private val pause: (Int) -> Unit = { Thread.sleep(1000L * it) },
 ) {
-    fun send(key: String, body: ByteArray, mime: String = "image/jpeg"): SendResult {
+    fun send(key: String, body: ByteArray, mime: String = "image/jpeg", overlay: Boolean = false): SendResult {
         var last: SendResult = SendResult.Network("none")
         for (i in 1..attempts) {
-            last = once(key, body, mime)
+            last = once(key, body, mime, overlay)
             val retry = last is SendResult.Network || (last is SendResult.Server && last.code >= 500)
             if (!retry) return last
             if (i < attempts) pause(i)
@@ -32,7 +32,7 @@ class Uploader(
         return last
     }
 
-    private fun once(key: String, body: ByteArray, mime: String): SendResult {
+    private fun once(key: String, body: ByteArray, mime: String, overlay: Boolean): SendResult {
         var conn: HttpURLConnection? = null
         return try {
             conn = URL(url).openConnection() as HttpURLConnection
@@ -42,6 +42,7 @@ class Uploader(
             conn.readTimeout = timeoutMs
             conn.setRequestProperty("X-Key", key)
             conn.setRequestProperty("Content-Type", mime)
+            if (overlay) conn.setRequestProperty("X-Overlay", "1")
             conn.setFixedLengthStreamingMode(body.size)
             conn.outputStream.use { it.write(body) }
             when (val code = conn.responseCode) {
@@ -60,6 +61,7 @@ class Uploader(
     }
 
     companion object {
-        const val SHOT_URL = "https://46-8-228-165.sslip.io/scout/shot"
+        const val BASE = "https://46-8-228-165.sslip.io"
+        const val SHOT_URL = "$BASE/scout/shot"
     }
 }
