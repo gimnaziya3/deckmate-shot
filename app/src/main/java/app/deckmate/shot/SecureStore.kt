@@ -60,6 +60,9 @@ class SecureStore(ctx: Context) {
     var overlayOn: Boolean
         get() = prefs.getBoolean("ov_on", false)
         set(v) = prefs.edit().putBoolean("ov_on", v).apply()
+    var watchOn: Boolean
+        get() = prefs.getBoolean("watch_on", false)
+        set(v) = prefs.edit().putBoolean("watch_on", v).apply()
     var alpha: Int
         get() = prefs.getInt("ov_alpha", 80)
         set(v) = prefs.edit().putInt("ov_alpha", v).apply()

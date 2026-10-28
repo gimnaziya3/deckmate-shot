@@ -10,8 +10,8 @@
     <string name="check">Check</string>
     <string name="saved">Key saved.</string>
     <string name="check_ok">Key works.</string>
-    <string name="h_shot">2. Quick screenshot</string>
-    <string name="shot_info">Turn on screen capture once (Android asks: Entire screen, then Start). After that a double press of the side button takes the shot if you assign this app to it (Samsung: Settings > Advanced features > Side button > Double press > Open app > DeckMate), or use the DeckMate tile in quick settings.</string>
+    <string name="h_shot">Backup method: screen capture</string>
+    <string name="shot_info">Works without gallery screenshots, but on some phones (Samsung on Android 15) the system hides the game during capture and the shot is black. Then use auto-send above.</string>
     <string name="start_capture">Turn on screen capture</string>
     <string name="stop_capture">Stop capture</string>
     <string name="allow_notifications">Allow notifications</string>
@@ -51,4 +51,11 @@
     <string name="a11y_desc">Takes a screenshot when you press both volume buttons together and sends it to the DeckMate server. It does not read the screen content or other apps.</string>
     <string name="a11y_info">Fast mode (deckmate-shot-fast file): both volume buttons take a shot with no dialogs. Enable it in Accessibility settings.</string>
     <string name="a11y_open">Enable fast mode</string>
+    <string name="h_watch">2. Auto-send screenshots</string>
+    <string name="watch_info">Take a normal screenshot (power + volume down, palm swipe or side button): the app notices it and sends it. No permission dialog and no hidden game. Screenshots stay in your gallery.</string>
+    <string name="watch_enable">Watch for screenshots</string>
+    <string name="watch_perm">Allow access to photos</string>
+    <string name="watch_perm_no">Photo access needed: choose Allow access to all photos.</string>
+    <string name="w_ready">Waiting for a screenshot. Take it as usual.</string>
+    <string name="w_channel">Screenshot auto-send</string>
 </resources>

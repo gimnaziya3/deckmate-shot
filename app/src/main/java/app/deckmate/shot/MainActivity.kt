@@ -26,6 +26,8 @@ class MainActivity : Activity() {
     private lateinit var store: SecureStore
     private lateinit var overlaySwitch: Switch
     private lateinit var permInfo: TextView
+    private lateinit var watchSwitch: Switch
+    private lateinit var watchInfo: TextView
     private var syncing = false
 
     private val blue = Color.rgb(47, 111, 235)
@@ -60,6 +62,30 @@ class MainActivity : Activity() {
         info = label(getString(R.string.s_idle), 14f, blue, bold = true)
         keyCard.addView(info)
 
+        val watch = card(page, R.string.h_watch)
+        watch.addView(label(getString(R.string.watch_info), 14f))
+        watchSwitch = Switch(this).apply {
+            setText(R.string.watch_enable)
+            textSize = 16f
+            setOnCheckedChangeListener { _, on ->
+                if (syncing) return@setOnCheckedChangeListener
+                store.watchOn = on
+                if (on) {
+                    if (!hasPhotos()) askPhotos()
+                    WatchService.start(this@MainActivity)
+                } else {
+                    WatchService.stop(this@MainActivity)
+                }
+            }
+        }
+        watch.addView(watchSwitch, full())
+        watchInfo = label("", 13f, Color.rgb(160, 50, 50))
+        watch.addView(watchInfo)
+        watch.addView(button(R.string.allow_notifications, false) {
+            if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }, full())
+        watch.addView(button(R.string.watch_perm, false) { askPhotos() }, full())
+
         val shot = card(page, R.string.h_shot)
         shot.addView(label(getString(R.string.shot_info), 14f))
         shot.addView(button(R.string.start_capture, true) {
@@ -67,9 +93,6 @@ class MainActivity : Activity() {
         }, full())
         shot.addView(button(R.string.stop_capture, false) {
             startService(Intent(this, CaptureService::class.java).setAction(CaptureService.A_STOP))
-        }, full())
-        shot.addView(button(R.string.allow_notifications, false) {
-            if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }, full())
 
         val ov = card(page, R.string.h_overlay)
@@ -116,7 +139,22 @@ class MainActivity : Activity() {
         syncOverlay()
     }
 
+    private fun hasPhotos(): Boolean {
+        val p = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
+        return checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun askPhotos() {
+        val p = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
+        requestPermissions(arrayOf(p), 2)
+    }
+
     private fun syncOverlay() {
+        syncing = true
+        watchSwitch.isChecked = store.watchOn
+        syncing = false
+        watchInfo.text = if (hasPhotos()) "" else getString(R.string.watch_perm_no)
+        if (store.watchOn && hasPhotos() && !WatchService.running) WatchService.start(this)
         val ok = OverlayController.canDraw(this)
         if (!ok && store.overlayOn) store.overlayOn = false
         syncing = true
