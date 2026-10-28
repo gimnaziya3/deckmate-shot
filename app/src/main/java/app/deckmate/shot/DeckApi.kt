@@ -5,7 +5,7 @@ import java.net.URL
 import org.json.JSONObject
 
 data class Card(val name: String, val elixir: Int?, val evo: Boolean, val hero: Boolean, val icon: String?)
-data class Last(val seq: Int, val ok: Boolean, val msg: String, val cards: List<Card>)
+data class Last(val seq: Int, val ok: Boolean, val msg: String, val cards: List<Card>, val avg: Double? = null)
 
 /** Забирает с сервера результат распознавания (/scout/last) и иконки карт. Ключ только в заголовке. */
 object DeckApi {
@@ -19,7 +19,7 @@ object DeckApi {
                 c.optBoolean("evo"), c.optBoolean("hero"), if (c.isNull("icon")) null else c.optString("icon")
             )
         }
-        return Last(o.optInt("seq"), o.optBoolean("ok"), o.optString("msg"), cards)
+        return Last(o.optInt("seq"), o.optBoolean("ok"), o.optString("msg"), cards, if (o.has("avg") && !o.isNull("avg")) o.optDouble("avg") else null)
     }
 
     fun last(key: String, base: String = Uploader.BASE): Last? = try {

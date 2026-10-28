@@ -34,7 +34,7 @@ object OverlayController {
     fun show(ctx: Context, deck: Last, hideMs: Long = HIDE_MS) {
         val app = ctx.applicationContext
         val loaded = deck.cards.map { c -> c.icon?.let { p -> icons.getOrPut(p) { DeckApi.icon(p) ?: ByteArray(0) } } }
-        ui.post { showRow(app, deck.cards, loaded, hideMs, false) }
+        ui.post { showRow(app, deck.cards, loaded, hideMs, false, deck.avg) }
     }
 
     /** Короткое сообщение на месте плашки (колода не найдена, нет ответа и т. п.). */
@@ -61,7 +61,7 @@ object OverlayController {
     }
 
     /** Колода как в игре: два ряда по 4 карты; эволюции и герои в цветной рамке с пометкой. */
-    private fun buildRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>): LinearLayout {
+    private fun buildRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>, serverAvg: Double? = null): LinearLayout {
         val store = SecureStore(app)
         val d = app.resources.displayMetrics.density
         val k = store.size / 100f
@@ -78,7 +78,7 @@ object OverlayController {
         }
         val costs = cards.mapNotNull { it.elixir }
         if (costs.isNotEmpty()) {
-            val avg = Math.round(costs.sum() * 10.0 / costs.size) / 10.0
+            val avg = serverAvg ?: (Math.round(costs.sum() * 10.0 / costs.size) / 10.0)  // средний эликсир присылает сервер (как считает бот и игра)
             grid.addView(TextView(app).apply {
                 text = app.getString(R.string.ov_avg, avg.toString())
                 setTextColor(Color.WHITE)
@@ -137,10 +137,10 @@ object OverlayController {
         return grid
     }
 
-    private fun showRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>, hideMs: Long, touchable: Boolean) {
+    private fun showRow(app: Context, cards: List<Card>, imgs: List<ByteArray?>, hideMs: Long, touchable: Boolean, avg: Double? = null) {
         hide(app)
         if (!canDraw(app)) return
-        attach(app, buildRow(app, cards, imgs), hideMs, touchable)
+        attach(app, buildRow(app, cards, imgs, avg), hideMs, touchable)
     }
 
     private fun attach(app: Context, v: View, hideMs: Long, touchable: Boolean) {
