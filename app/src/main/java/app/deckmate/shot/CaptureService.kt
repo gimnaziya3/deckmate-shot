@@ -231,6 +231,8 @@ class CaptureService : Service() {
             when (code) {
                 "sending" -> R.string.s_sending
                 "ok" -> R.string.s_ok
+                "ok_ov" -> R.string.s_ok_ov
+                "ok_noov" -> R.string.s_ok_noov
                 "bad_key" -> R.string.s_bad_key
                 "no_key" -> R.string.s_no_key
                 "net" -> R.string.s_net

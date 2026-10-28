@@ -157,7 +157,6 @@ class MainActivity : Activity() {
         watchInfo.text = if (hasPhotos()) "" else getString(R.string.watch_perm_no)
         if (store.watchOn && hasPhotos() && !WatchService.running) WatchService.start(this)
         val ok = OverlayController.canDraw(this)
-        if (!ok && store.overlayOn) store.overlayOn = false
         syncing = true
         overlaySwitch.isChecked = store.overlayOn && ok
         syncing = false

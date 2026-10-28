@@ -12,12 +12,15 @@ object Pipeline {
 
     fun deliver(ctx: Context, key: String, jpeg: ByteArray): String {
         val app = ctx.applicationContext
-        val overlay = SecureStore(app).overlayOn && OverlayController.canDraw(app)
-        val base = if (overlay) (DeckApi.last(key)?.seq ?: 0) else 0
+        val wanted = SecureStore(app).overlayOn
+        val allowed = wanted && OverlayController.canDraw(app)
+        // базовый номер результата: без него не отличить новую колоду от старой; если сервер не отвечает, шлём как обычно (в Telegram)
+        val base = if (allowed) (DeckApi.last(key) ?: DeckApi.last(key))?.seq else null
+        val overlay = allowed && base != null
         return when (Uploader(Uploader.SHOT_URL).send(key, jpeg, overlay = overlay)) {
             is SendResult.Ok -> {
-                if (overlay) Thread { flow(app, key, jpeg, base) }.start()
-                "ok"
+                if (overlay) Thread { flow(app, key, jpeg, base ?: 0) }.start()
+                if (overlay) "ok_ov" else if (wanted) "ok_noov" else "ok"
             }
             is SendResult.BadKey -> "bad_key"
             is SendResult.TooFast -> "too_fast"

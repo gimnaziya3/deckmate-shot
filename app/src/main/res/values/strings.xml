@@ -61,4 +61,6 @@
     <string name="ov_unread">Cannot see the opponent nick. Take the shot when the nick and clan are visible in the top left corner.</string>
     <string name="ov_area">The top half of the screen is off limits: the opponent nick and clan are there. The strip is placed on your side only.</string>
     <string name="ov_avg">Average elixir: %1$s</string>
+    <string name="s_ok_ov">Sent. The deck will appear on the screen.</string>
+    <string name="s_ok_noov">Sent, but the overlay did not start (no permission to display over other apps, or the server did not answer). The deck will arrive in Telegram.</string>
 </resources>
